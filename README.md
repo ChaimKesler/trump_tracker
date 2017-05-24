@@ -1,2 +1,2 @@
 # trump_tracker
-Project and forecast Donald Trump's polling data
+Track and forecast Donald Trump's polling data
