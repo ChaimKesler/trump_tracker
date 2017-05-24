@@ -1,0 +1,101 @@
+---
+title: "Donald's Favorables - Fake News, Sad"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    source_code: embed
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(flexdashboard)
+library(forecast)
+library(xtable)
+library(lubridate)
+library(pollstR)
+
+# Pull and process data
+rolling_window = 14 #Set to be a changable option
+
+today <- ymd(format(Sys.time(), '%Y-%m-%d'))
+start <- today %m-% months(11:11) # Set this to a changeable variable
+
+poll_name <- "donald-trump-favorable-rating"
+polls <- pollster_charts_polls(poll_name)[["content"]]
+
+favorable_data <- aggregate(Favorable ~ end_date, polls, mean)
+favorable_data <- favorable_data[order(as.Date(favorable_data$end_date, format="%Y-%m-%d")),]
+favorable_data <- subset(favorable_data, favorable_data$end_date >= start)
+
+donald_roll <- rollmean(favorable_data$Favorable, rolling_window)
+
+donald_cast <- forecast(donald_roll)
+forecastframe <- data.frame(donald_cast)
+```
+
+# Introduction {.sidebar}
+###Dashboard Data
+* Distribution
+* Forecast Plot
+* Rolling Average of Polls
+* Smoother: 14
+
+###Date Range
+```{r}
+h4(paste(start," - ",today, sep=""))
+
+```
+
+###Histogram Bins:
+```{r}
+selectInput("n_breaks", label = "Number of Bins:", choices = c(10, 20, 50), selected = 20)
+```
+
+# Donald's Favorables
+
+Column {.tabset}
+-------------------------------------
+### Favorable Histogram
+```{r echo = FALSE, comment=NA}
+renderPlot({
+  hist(favorable_data$Favorable
+    , main = paste("Polling Distribution Since: ", start,sep="")
+    , xlab = "Favorability Percent"
+    , ylab = "Count of Observations"
+    , breaks = as.numeric(input$n_breaks)
+    , col = "dodgerblue2")
+  }
+)
+```
+
+### Forecast Chart
+``````{r echo = FALSE, comment=NA}
+renderPlot({
+  plot(donald_cast, main = "Plot of Forecast"
+       , xlab = "Polling Count"
+       , ylab = "Favorability Percent")
+  }
+)
+```
+
+### Supporting Data
+```{r echo = FALSE, comment=NA}
+h3(paste("Polling Performance Since: ", start, sep = ""))
+
+h5(paste("    - The median for the time period is: "
+      , format(round(median(na.omit(favorable_data$Favorable)), 2), nsmall = 2), sep=""))
+
+h5(paste("    - The mean of percent final score is: "
+      , format(round(mean(na.omit(favorable_data$Favorable)), 2), nsmall = 2), sep=""))
+
+h3("Forecast of Donald's Approval")
+h5("86/95 Upper and Lower Prediciton Interval s")
+renderTable({
+  forecastframe
+})
+```
+
+Source data available via:
+http://elections.huffingtonpost.com/pollster/api
