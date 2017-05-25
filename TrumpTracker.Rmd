@@ -44,7 +44,7 @@ forecastframe <- data.frame(donald_cast)
 
 ###Date Range
 ```{r}
-h4(paste(start," - ",today, sep=""))
+h4(paste(start," to ",today, sep=""))
 
 ```
 
@@ -91,7 +91,7 @@ h5(paste("    - The mean of percent final score is: "
       , format(round(mean(na.omit(favorable_data$Favorable)), 2), nsmall = 2), sep=""))
 
 h3("Forecast of Donald's Approval")
-h5("86/95 Upper and Lower Prediciton Interval s")
+h5("80/95 Upper and Lower Prediciton Interval s")
 renderTable({
   forecastframe
 })
